@@ -13,6 +13,9 @@ js library helps validate an object follow a predefined structure.
    - [Optional Fields](#optional-fields)
    - [Default Values](#default-values)
    - [Mixed Types](#mixed-types)
+5. [StructValidator Requirements Specification](#structValidator-requirements-specification)
+6. [Development](#development)
+   - [Publish to NPM](#publish-to-npm)
 
 
 ### Structure Overview
@@ -249,7 +252,7 @@ const invalidMixedTypeEvent = {
 };
 ```
 
-## StructValidator Requirments Specification
+## StructValidator Requirements Specification
 
 ### 1. Purpose
 The StructValidator class is designed to validate data against a specified structure, ensuring that the data conforms to the expected types and constraints.
@@ -264,12 +267,12 @@ The structure can be defined in the following ways:
 2.2. Arrays:
    - Defined as an array with a single element describing the structure of array items
    - Example: ['string'], [{ id: 'string' }]
-   - Required array could be empty, null or undefined.
+   - Required array could not be empty, null or undefined.
 
 2.3. Objects:
    - Defined as an object with key-value pairs
    - Example: { id: 'string', name: 'string' }
-   - Required object could be empty, null or undefined.
+   - Required object could not be empty, null or undefined.
 
 2.4. Nested Structures:
    - Any combination of the above
@@ -344,20 +347,6 @@ The structure can be defined in the following ways:
    - Entry point for validation
    - Throws an error if validation fails
 
-7.2. validateRecursive(data, structure, path):
-   - Recursive method to handle nested structures
-   - Throws an error if validation fails
-
-7.3. validateField(value, spec, path, required):
-   - Validates individual fields
-   - Throws an error if validation fails
-
-7.4. parseRequired(key):
-   - Parses field names to determine if they're required
-
-7.5. parseSpec(spec):
-   - Parses field specifications to extract type and default value information
-
 
 ## Development
 
@@ -380,3 +369,4 @@ npm run build
 ```
 
 ### Publish to NPM
+[NPM Guilde](./docs/publish_to_npm.md)
