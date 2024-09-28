@@ -1,9 +1,9 @@
 {
   "name": "@trantoanvan/js-struct-validator",
-  "version": "1.0.0",
-  "description": "js library helps validate an object follow a predefined structure",
-  "main": "dist/bundled.cjs.js",    
-  "module": "dist/bundled.esm.js", 
+  "version": "1.0.1",
+  "description": "js library helps validate an object follow a predefined specification structure",
+  "main": "dist/bundled.cjs.js",
+  "module": "dist/bundled.esm.js",
   "scripts": {
     "dev": "rollup -c --bundleConfigAsCjs --watch",
     "build": "cross-env NODE_ENV=production rollup -c --bundleConfigAsCjs ",
@@ -22,6 +22,7 @@
     "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "punycode": "^2.3.1",
     "rollup": "^4.22.4"
   }
 }

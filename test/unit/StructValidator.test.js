@@ -1,22 +1,66 @@
-import StructValidator from '../../src/StructValidator';
+import StructValidator from '../../src/StructValidator'
 
 describe('Struct Validator', () => {
     let specStructure;
 
     // Helper function to validate events
-    const validateEvent = (eventName, eventData) => {
-        return () => StructValidator.validate(eventData, specStructure);
+    const doValidation = (specification, eventData) => {
+        return () => StructValidator.validate(eventData, specification);
     };
 
-    describe('Simple Event', () => {
-        const SimpleEvent = {
+    describe('Very basic checks at Top Level', () => {
+        beforeAll(() => {
+            specStructure = 'string';
+        });
+
+        test('validates a valid simple event', () => {
+            const validEvent = 'hello';
+            expect(doValidation(specStructure, validEvent)).not.toThrow();
+        });
+
+        test('throws error for wrong type: number', () => {
+            const validEvent = 123;
+            expect(doValidation(specStructure, validEvent)).toThrow('Invalid type for : expected string, got number')
+        });
+
+        test('throws error for wrong type: boolean', () => {
+            const validEvent = true;
+            expect(doValidation(specStructure, validEvent)).toThrow('Invalid type for : expected string, got boolean')
+        });
+    });
+
+    describe('Simple Array at Top Level', () => {
+        const SimpleArray = ['string']
+
+        beforeAll(() => {
+            specStructure = SimpleArray;
+        });
+
+        test('validates a valid simple array', () => {
+            const validEvent = ['hello', 'world'];
+            expect(doValidation(specStructure, validEvent)).not.toThrow();
+        });
+
+        test('throws error for required array but empty', () => {
+            const invalidEvent = [];
+            expect(doValidation(specStructure, invalidEvent)).toThrow("Array cannot be empty: ");
+        });
+
+        test('throws error for wrong type in array', () => {
+            const invalidEvent = ['hello', 123];
+            expect(doValidation(specStructure, invalidEvent)).toThrow("Invalid type for .1: expected string, got number");
+        });
+    });
+
+    describe('Simple Object at Top Level', () => {
+        const SimpleObject = {
             name$: 'string',
             timestamp$: 'number',
             value: 'number'
         };
 
         beforeAll(() => {
-            specStructure = SimpleEvent;
+            specStructure = SimpleObject;
         });
 
         test('validates a valid simple event', () => {
@@ -25,7 +69,12 @@ describe('Struct Validator', () => {
                 timestamp: 1623456789,
                 value: 42
             };
-            expect(validateEvent('SimpleEvent', validEvent)).not.toThrow();
+            expect(doValidation(specStructure, validEvent)).not.toThrow();
+        });
+
+        test('throws error for required Object but empty', () => {
+            const invalidEvent = {};
+            expect(doValidation(specStructure, invalidEvent)).toThrow("Object cannot be empty: ");
         });
 
         test('throws error for missing required field', () => {
@@ -33,9 +82,11 @@ describe('Struct Validator', () => {
                 name: "Invalid Simple Event",
                 value: 42
             };
-            expect(validateEvent('SimpleEvent', invalidEvent)).toThrow(/missing required field.*timestamp/i);
+            expect(doValidation(specStructure, invalidEvent)).toThrow(/missing required field.*timestamp/i);
         });
     });
+
+    
 
     describe('Nested Objects', () => {
         const NestedEvent = {
@@ -60,7 +111,7 @@ describe('Struct Validator', () => {
                 },
                 action: "login"
             };
-            expect(validateEvent('NestedEvent', validEvent)).not.toThrow();
+            expect(doValidation(specStructure, validEvent)).not.toThrow();
         });
 
         test('throws error for missing required nested field', () => {
@@ -71,7 +122,7 @@ describe('Struct Validator', () => {
                 },
                 action: "logout"
             };
-            expect(validateEvent('NestedEvent', invalidEvent)).toThrow(/missing required field.*user.id/i);
+            expect(doValidation(specStructure, invalidEvent)).toThrow(/missing required field.*user.id/i);
         });
     });
 
@@ -96,18 +147,18 @@ describe('Struct Validator', () => {
                 ],
                 total: 3
             };
-            expect(validateEvent('ArrayEvent', validEvent)).not.toThrow();
+            expect(doValidation(specStructure, validEvent)).not.toThrow();
         });
 
         test('throws error for missing required field in array item', () => {
             const invalidEvent = {
                 items: [
                     { id: "item1", quantity: 2 },
-                    { quantity: 1 }
+                    { quantity: 1 },
                 ],
                 total: 3
             };
-            expect(validateEvent('ArrayEvent', invalidEvent)).toThrow(/missing required field.*items\[1\].id/i);
+            expect(doValidation(specStructure, invalidEvent)).toThrow('Missing required field: items.1.id');
         });
     });
 
@@ -127,7 +178,7 @@ describe('Struct Validator', () => {
                 id: "event123",
                 name: "Optional Event"
             };
-            expect(validateEvent('OptionalFieldsEvent', validEvent)).not.toThrow();
+            expect(doValidation(specStructure, validEvent)).not.toThrow();
         });
 
         test('validates event with all fields', () => {
@@ -136,7 +187,7 @@ describe('Struct Validator', () => {
                 name: "Another Optional Event",
                 description: "This field is optional"
             };
-            expect(validateEvent('OptionalFieldsEvent', validEvent)).not.toThrow();
+            expect(doValidation(specStructure, validEvent)).not.toThrow();
         });
     });
 
@@ -155,7 +206,7 @@ describe('Struct Validator', () => {
                 type: "standard",
                 priority: 1
             };
-            expect(validateEvent('DefaultValueEvent', validEvent)).not.toThrow();
+            expect(doValidation(specStructure, validEvent)).not.toThrow();
         });
 
         test('validates event overriding defaults', () => {
@@ -164,7 +215,7 @@ describe('Struct Validator', () => {
                 type: "special"
             };
 
-            expect(validateEvent('DefaultValueEvent', validEvent)).toThrow('Invalid value for type: expected one of [standard], got special');
+            expect(doValidation(specStructure, validEvent)).toThrow('Invalid value for type: expected one of [standard], got special');
         });
     });
 
@@ -193,10 +244,10 @@ describe('Struct Validator', () => {
                 },
                 timestamp: 1623456789
             };
-            expect(validateEvent('MixedTypeEvent', validEvent)).not.toThrow();
+            expect(doValidation(specStructure, validEvent)).not.toThrow();
         });
 
-        test.only('throws error for wrong type in array', () => {
+        test('throws error for wrong type in array', () => {
             const invalidEvent = {
                 id: "mixed456",
                 data: {
@@ -206,7 +257,7 @@ describe('Struct Validator', () => {
                 },
                 timestamp: 1623456790
             };
-            expect(validateEvent('MixedTypeEvent', invalidEvent)).toThrow('Invalid type for data.tags.0: expected string, got number');
+            expect(doValidation(specStructure, invalidEvent)).toThrow('Invalid type for data.tags.1: expected string, got number');
         });
     });
 });

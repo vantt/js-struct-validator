@@ -11,7 +11,7 @@ module.exports = {
         {
             displayName: 'Unit Tests',
             testMatch: ['<rootDir>/test/unit/**/*.test.js'],
-            testEnvironment: 'jsdom',          
+            testEnvironment: 'node',          
         },
         {
             displayName: 'Integration Tests',

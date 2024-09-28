@@ -4,45 +4,26 @@ js library helps validate an object follow a predefined structure.
 ## Usage Guide
 ### Table of Contents
 1. [Structure Overview](#structure-overview)
-2. [Basic Usage](#basic-usage)
-3. [Usage Cases](#usage-cases)
+2. [Validation Process](#validation-process)
+3. [Basic Usage](#basic-usage)
+4. [Usage Cases](#usage-cases)
    - [Simple Event](#simple-event)
    - [Nested Objects](#nested-objects)
    - [Arrays](#arrays)
    - [Optional Fields](#optional-fields)
    - [Default Values](#default-values)
    - [Mixed Types](#mixed-types)
-4. [Validation Process](#validation-process)
+
 
 ### Structure Overview
 
-The validation structure uses native JavaScript objects with a special syntax to define event schemas:
+The validation structure uses native JavaScript objects with a special syntax to define data structure's schemas:
 
 - Field names ending with `$` are required.
-- `type` specifies the expected data type (String, Number, Boolean, Object, Array).
+- `type` specifies the expected data type (string, number, boolean, object, array).
 - `default` specifies a default value for the field.
 - For objects, use `properties` to define nested fields.
 - For arrays, use `items` to define the structure of array elements.
-
-### Basic Usage
-
-```javascript
-import FacebookEventStructures from './FacebookEventStructures';
-import FacebookEventValidator from './FacebookEventValidator';
-
-// Define an event structure
-const eventStructure = FacebookEventStructures.structures.SomeEvent;
-
-// Validate an event
-try {
-  FacebookEventValidator.validate(eventData);
-  console.log("Event is valid");
-} catch (error) {
-  console.error("Validation error:", error.message);
-}
-```
-
-### Usage Cases
 
 ### Validation Process
 
@@ -58,12 +39,48 @@ The validation process involves the following steps:
 
 If any validation errors occur, an error is thrown with a descriptive message indicating the nature and location of the error in the event data.
 
+### Basic Usage
+
+```javascript
+import StructValidator from '@trantoanvan/js-struct-validator'
+
+// Define an event structure
+const eventStructure = {
+    user$: {
+        id$: 'string',
+        name: 'string',
+        age: 'number'
+    },
+    action$: 'string'
+};
+
+const eventData = {
+  user: {
+    id: "user123",
+    name: "John Doe",
+    age: 30
+  },
+  action: "login"
+};
+
+// Validate an event
+try {
+  StructValidator.validate(eventData, eventStructure); 
+  console.log("Event is valid");
+} 
+catch (error) {
+  console.error("Validation error:", error.message);
+}
+```
+
+### Usage Cases
+
 ```javascript
 const SimpleEvent = {
-            name$: 'string',
-            timestamp$: 'number',
-            value: 'number'
-        };
+    name$: 'string',
+    timestamp$: 'number',
+    value: 'number'
+};
 
 // Valid event
 const validSimpleEvent = {
@@ -90,13 +107,13 @@ StructValidator.validate(invalidSimpleEvent, SimpleEventSpecification); // throw
 
 ```javascript
 const NestedEvent = {
-            user$: {
-                id$: 'string',
-                name: 'string',
-                age: 'number'
-            },
-            action$: 'string'
-        };
+    user$: {
+        id$: 'string',
+        name: 'string',
+        age: 'number'
+    },
+    action$: 'string'
+};
 
 // Valid nested event
 const validNestedEvent = {
@@ -122,12 +139,12 @@ const invalidNestedEvent = {
 
 ```javascript
 const ArrayEvent = {
-            items$: [{
-                id$: 'string',
-                quantity: 'number'
-            }],
-            total$: 'number'
-        };
+    items$: [{
+        id$: 'string',
+        quantity: 'number'
+    }],
+    total$: 'number'
+};
 
 // Valid array event
 const validArrayEvent = {
@@ -152,10 +169,10 @@ const invalidArrayEvent = {
 
 ```javascript
 const OptionalFieldsEvent = {
-            id$: 'string',
-            name: 'string',
-            description: 'string'
-        };
+    id$: 'string',
+    name: 'string',
+    description: 'string'
+};
 
 // Valid event with optional fields
 const validOptionalEvent = {
@@ -175,9 +192,9 @@ const anotherValidOptionalEvent = {
 
 ```javascript
 const DefaultValueEvent = {
-            type$: 'string = standard',
-            priority: 'number = 1'
-        };
+    type$: 'string = standard',
+    priority: 'number = 1'
+};
 
 // Valid event using defaults
 const validDefaultEvent = {
@@ -200,14 +217,14 @@ const invalidDefaultEvent = {
 
 ```javascript
 const MixedTypeEvent = {
-            id$: 'string',
-            data$: {
-                value: 'number',
-                tags: ['string'],
-                active: 'boolean'
-            },
-            timestamp$: 'number'
-        };
+    id$: 'string',
+    data$: {
+        value: 'number',
+        tags: ['string'],
+        active: 'boolean'
+    },
+    timestamp$: 'number'
+};
 
 // Valid mixed type event
 const validMixedTypeEvent = {
@@ -232,78 +249,134 @@ const invalidMixedTypeEvent = {
 };
 ```
 
-## Publish Package to NPM
-Publishing a GitHub repository to npm involves several steps, from setting up your project to actually publishing it. Here's a comprehensive guide on how to do this:
+## StructValidator Requirments Specification
 
-### Steps to Publish a GitHub Repository to npm
+### 1. Purpose
+The StructValidator class is designed to validate data against a specified structure, ensuring that the data conforms to the expected types and constraints.
 
-1. **Prepare Your Project**
+### 2. Structure Definition
+The structure can be defined in the following ways:
 
-   - **Ensure your project has a `package.json` file**: This file is essential as it contains metadata about your package, including its name, version, description, and entry point.
-     ```bash
-     npm init
-     ```
-     This command will prompt you for information and generate a `package.json` file.
+2.1. Primitive Types:
+   - Defined as a string: 'string', 'number', 'boolean'
+   - Example: 'string'
 
-   - **Add your code**: Make sure your code is ready and organized in your repository. The entry point specified in `package.json` should exist (e.g., `index.js`).
+2.2. Arrays:
+   - Defined as an array with a single element describing the structure of array items
+   - Example: ['string'], [{ id: 'string' }]
+   - Required array could be empty, null or undefined.
 
-2. **Set Up Your GitHub Repository**
+2.3. Objects:
+   - Defined as an object with key-value pairs
+   - Example: { id: 'string', name: 'string' }
+   - Required object could be empty, null or undefined.
 
-   - **Create a GitHub repository**: If you haven't already, create a new repository on GitHub where your project will be hosted.
+2.4. Nested Structures:
+   - Any combination of the above
+   - Example: { users: [{ id: 'string', age: 'number' }] }
 
-   - **Link the repository**: Add the repository URL to the `repository` field in your `package.json` file. This helps users find the source code.
-     ```json
-     "repository": {
-       "type": "git",
-       "url": "https://github.com/your-username/your-repo.git"
-     }
-     ```
+### 3. Field Specifications
 
-3. **Login to npm**
+3.1. Required Fields:
+   - Indicated by appending '$' to the field name
+   - Example: { id$: 'string' }
 
-   - Ensure you have an npm account. If not, sign up on the npm website.
-   - Log in to npm via the command line:
-     ```bash
-     npm login
-     ```
-   - Enter your npm username, password, and email when prompted.
+3.2. Optional Fields:
+   - Regular field names without '$'
+   - Example: { name: 'string' }
 
-4. **Publish Your Package**
+3.3. Default Values:
+   - Specified after the type, separated by '='
+   - Example: { status: 'string = active|inactive' }
 
-   - **Initial Publish**: Run the following command to publish your package to the npm registry:
-     ```bash
-     npm publish --access public
-     ```
-   - Ensure that the package name is unique on npm; otherwise, you may need to use a scoped name (e.g., `@username/package-name`).
+### 4. Validation Rules
 
-5. **Automate Publishing with GitHub Actions (Optional)**
+4.1. Type Checking:
+   - Values must match the specified type
 
-   You can automate the publishing process using GitHub Actions by creating a workflow that triggers on new releases:
+4.2. Required Fields:
+   - Must be present in the data
+   - Cannot be undefined or null
 
-   - Create a `.github/workflows/publish.yml` file in your repository:
-     ```yaml
-     name: Publish Package to npm
+4.3. Optional Fields:
+   - Can be missing from the data
+   - Can be undefined or null
 
-     on:
-       release:
-         types: [published]
+4.4. Default Values:
+   - If specified, the value must match one of the provided options
 
-     jobs:
-       build:
-         runs-on: ubuntu-latest
-         steps:
-           - uses: actions/checkout@v4
-           - uses: actions/setup-node@v4
-             with:
-               node-version: '16.x'
-               registry-url: 'https://registry.npmjs.org'
-           - run: npm ci
-           - run: npm publish --access public
-             env:
-               NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-     ```
-   - Store your npm authentication token as a secret in your GitHub repository settings under `NPM_TOKEN`.
+4.5. Arrays:
+   - Each item in the array is validated against the specified item structure
 
-6. **Verify Publication**
+4.6. Objects:
+   - Each present field is validated against its specification
+   - Missing optional fields are ignored
 
-   After publishing, verify that your package is available on the npm registry by searching for it or checking your profile on the npm website.
+### 5. Error Handling
+
+5.1. Error Throwing:
+   - Errors are thrown immediately upon encountering a validation failure
+   - Validation stops at the first error
+
+5.2. Error Messages:
+   - Include the path of the invalid field
+   - Describe the nature of the validation failure
+
+### 6. Special Cases
+
+6.1. Top-level Structures:
+   - Can be primitive types, arrays, or objects without field names
+   - Example: 'string', ['string'], { id: 'string' }
+
+6.2. Nested Structures:
+   - Follow the same rules as top-level structures
+
+6.3. Empty Arrays:
+   - Allowed if the field is not required
+
+6.4. Null Values:
+   - Allowed for optional fields
+   - Not allowed for required fields
+
+### 7. Method Specifications
+
+7.1. validate(data, structure):
+   - Entry point for validation
+   - Throws an error if validation fails
+
+7.2. validateRecursive(data, structure, path):
+   - Recursive method to handle nested structures
+   - Throws an error if validation fails
+
+7.3. validateField(value, spec, path, required):
+   - Validates individual fields
+   - Throws an error if validation fails
+
+7.4. parseRequired(key):
+   - Parses field names to determine if they're required
+
+7.5. parseSpec(spec):
+   - Parses field specifications to extract type and default value information
+
+
+## Development
+
+### Installation
+
+### Test
+
+```bash
+
+npm run test
+
+```
+
+### Build
+
+```bash
+
+npm run build
+
+```
+
+### Publish to NPM

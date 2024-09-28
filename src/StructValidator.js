@@ -1,70 +1,93 @@
 export default class StructValidator {
 
-    static validate(data, structure) {
-        StructValidator.validateRecursive(data, structure);
+    static validate(data, sepecification, required=true) {
+        StructValidator.#validateRecursive(data, sepecification, '', required);
     }
 
-    static validateRecursive(data, structure, path = '') {
-        for (const [key, spec] of Object.entries(structure)) {
+    static #validateRecursive(data, specification, path = '', required = true) {
 
-            const [fieldName, required, type, defaultValue] = this.parseSpec(key, spec);
-            const fieldPath = path ? `${path}.${fieldName}` : fieldName;
-
-            // if required and field is missed.
+        if (data === undefined || data === null) {
             if (required) {
-                if (!(fieldName in data)) {
-                    throw new Error(`Missing required field: ${fieldPath}`);
-                }
-            }
-            // if not required and field is missed then skip this field.
-            else if (!(fieldName in data)) {
-                continue;
+                throw new Error(`Missing required field: ${path}`);
             }
 
-            const value = data?.[fieldName];
+            return; // Non-required field can be undefined or null
+        }
 
-            // validate object
-            if (type === 'object') {
-                this.validateObject(fieldName, required, value, spec, fieldPath);
-            }
-            // validate array
-            else if (type === 'array') {
-                this.validateArray(fieldName, required, value, spec, fieldPath);
-            }
-            // validate regular field
-            else {
-                this.validateField(fieldName, required, value, type, fieldPath, defaultValue);
-            }
+        // Handle primitive type at top level
+        if (typeof specification === 'string') {
+            this.#validateField(data, specification, path, required);
+        }
+
+        else if (Array.isArray(specification) || specification === 'array') {
+            this.#validateArray(data, specification, path, required);
+        }
+
+        // validate object
+        else if ((typeof specification === 'object' && specification !== null) || specification === 'object') {
+            this.#validateObject(data, specification, path, required);
         }
     }
 
-    static validateObject(fieldName, required, value, spec, fieldPath) {
+    static #validateObject(data, structure, path, required) {
+
         if (required) {
-            if (typeof value !== 'object' || value === null || value === undefined) {
-                throw new Error(`Invalid type for ${fieldPath}: expected object, got ${typeof value}`);
+            if (typeof data !== 'object' || data === null || data === undefined) {
+                throw new Error(`Invalid type for ${path}: expected object, got ${typeof data}`);
             }
-            else if (Object.keys(value).length === 0) {
-                throw new Error(`Object cannot be empty: ${fieldPath}`);
+            else if (Object.keys(data).length === 0) {
+                throw new Error(`Object cannot be empty: ${path}`);
             }
         }
+
 
         // if spec is just simply "object" string, we just skip it
         // @todo think about structure for simple object
-        if (spec === 'object') {
+        if (structure === 'object') {
             return
         }
 
-        // if spec is a structure, check for nested structure
-        this.validateRecursive(value, spec, fieldPath);
+
+        for (const [key, fieldSpec] of Object.entries(structure)) {
+            const { fieldName, fieldRequired } = this.#parseRequired(key);
+            const fieldPath = path ? `${path}.${fieldName}` : fieldName;
+
+            if (fieldName in data) {
+                this.#validateRecursive(data[fieldName], fieldSpec, fieldPath, fieldRequired);
+            }
+            else if (fieldRequired) {
+                throw new Error(`Missing required field: ${fieldPath}`);
+            }
+
+            // Non-required fields that are missing from data are simply skipped
+        }
     }
 
-    static validateArray(fieldName, required, value, spec, fieldPath) {
-        if (!Array.isArray(value)) {
-            throw new Error(`Invalid type for ${fieldPath}: expected array, got ${typeof value}`);
+    static #validateField(value, fieldSpec, fieldPath, required) {
+        const [type, defaultValue] = this.#parseSpec(fieldSpec);
+        const typeofValue = typeof value;
+
+        // validate Type
+        if (typeofValue !== type) {
+            throw new Error(`Invalid type for ${fieldPath}: expected ${type}, got ${typeofValue}`);
+        }
+
+        // validate defaultValue
+        if (defaultValue !== undefined) {
+            const validValues = defaultValue.split('|').map(v => v.trim());
+            if (!validValues.includes(value.toString())) {
+                throw new Error(`Invalid value for ${fieldPath}: expected one of [${validValues.join(', ')}], got ${value}`);
+            }
+        }
+    }
+
+    static #validateArray(data, spec, fieldPath, required) {
+        if (!Array.isArray(data)) {
+            throw new Error(`Invalid type for ${fieldPath}: expected array, got ${typeof data}`);
         }
         else {
             // check if array is empty
-            if (required && value.length === 0) {
+            if (required && data.length === 0) {
                 throw new Error(`Array cannot be empty: ${fieldPath}`);
             }
 
@@ -73,65 +96,23 @@ export default class StructValidator {
                 return
             }
 
+            const itemSpec = spec[0];
+
             // Validate each item in the array
-            value.forEach((item, index) => {
-                console.info(item, index);
-                this.validateRecursive(item, spec[0], `${fieldPath}.${index}`);
+            data.forEach((item, index) => {
+                this.#validateRecursive(item, itemSpec, `${fieldPath}.${index}`, true);
             });
         }
     }
 
-    static validateField(fieldName, required, value, type, fieldPath, defaultValue) {
-        if (required && (value === undefined || value === null)) {
-            throw new Error(`Required field could not be null or undefined: ${fieldPath}`);
-        }
-
-        // validate Type
-        if (typeof value !== type) {
-            throw new Error(`Invalid type for ${fieldPath}: expected ${type}, got ${typeof value}`);
-        }
-
-        this.validateDefaultValue(value, defaultValue, fieldPath);
+    static #parseRequired(key) {
+        const fieldRequired = key.endsWith('$');
+        const fieldName = fieldRequired ? key.slice(0, -1) : key;
+        return { fieldName, fieldRequired };
     }
 
-    static validateDefaultValue(value, defaultValue, path) {
-        if (defaultValue !== undefined) {
-            const validValues = defaultValue.split('|').map(v => v.trim());
-            if (!validValues.includes(value.toString())) {
-                throw new Error(`Invalid value for ${path}: expected one of [${validValues.join(', ')}], got ${value}`);
-            }
-        }
-    }
-
-    static parseSpec(key, spec) {
-        const { fieldName, required } = this.parseRequired(key);
-        const typeOfSpec = typeof spec;
-
-        let type, defaultValue;
-
-        if (typeOfSpec === 'string') {
-            [type, defaultValue] = spec.split('=').map(s => s.trim());
-            type = type.toLowerCase();
-        }
-        else if (typeOfSpec === 'object') {
-            type = 'object';
-        }
-        else if (Array.isArray(spec)) {
-            type = 'array'
-        }
-
-
-        return [fieldName, required, type, defaultValue];
-    }
-
-    static parseRequired(key) {
-        const required = key.endsWith('$');
-        let fieldName = key;
-
-        if (required) {
-            fieldName = key.replace('$', '');
-        }
-
-        return { fieldName, required };
+    static #parseSpec(spec) {
+        const [type, defaultValue] = spec.split('=').map(s => s.trim());
+        return [type.toLowerCase(), defaultValue];
     }
 }
