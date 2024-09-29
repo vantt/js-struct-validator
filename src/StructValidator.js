@@ -27,6 +27,9 @@ export default class StructValidator {
         else if ((typeof specification === 'object' && specification !== null) || specification === 'object') {
             this.#validateObject(data, specification, path, required);
         }
+        else {
+            throw new Error(`Invalid specification for ${path}`);
+        }
     }
 
     static #validateObject(data, structure, path, required) {
@@ -40,13 +43,19 @@ export default class StructValidator {
             }
         }
 
-
-        // if spec is just simply "object" string, we just skip it
-        // @todo think about structure for simple object
+        // if spec is just simply "object" string, we just skip it        
         if (structure === 'object') {
             return
         }
 
+        const specKeys = new Set(Object.keys(structure));
+
+        for (const [key, value] of Object.entries(data)) {            
+            const fieldPath = path ? `${path}.${key}` : key;
+            if (!specKeys.has(key) && !specKeys.has(`${key}$`)) {
+                console.warn(`Unexpected field in data: ${fieldPath}`);                
+            }
+        }
 
         for (const [key, fieldSpec] of Object.entries(structure)) {
             const { fieldName, fieldRequired } = this.#parseRequired(key);
@@ -60,7 +69,7 @@ export default class StructValidator {
             }
 
             // Non-required fields that are missing from data are simply skipped
-        }
+        }        
     }
 
     static #validateField(value, fieldSpec, fieldPath, required) {
@@ -75,7 +84,7 @@ export default class StructValidator {
         // validate defaultValue
         if (defaultValue !== undefined) {
             const validValues = defaultValue.split('|').map(v => v.trim());
-            if (!validValues.includes(value.toString())) {
+            if (!validValues.includes(String(value))) {
                 throw new Error(`Invalid value for ${fieldPath}: expected one of [${validValues.join(', ')}], got ${value}`);
             }
         }

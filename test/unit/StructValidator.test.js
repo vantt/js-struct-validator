@@ -86,7 +86,7 @@ describe('Struct Validator', () => {
         });
     });
 
-    
+
 
     describe('Nested Objects', () => {
         const NestedEvent = {
@@ -258,6 +258,104 @@ describe('Struct Validator', () => {
                 timestamp: 1623456790
             };
             expect(doValidation(specStructure, invalidEvent)).toThrow('Invalid type for data.tags.1: expected string, got number');
+        });
+    });
+
+    describe('Unexpected Fields', () => {
+        let consoleWarnSpy;
+
+        beforeEach(() => {
+            consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+        });
+
+        afterEach(() => {
+            consoleWarnSpy.mockRestore();
+        });
+
+        test('Object with unexpected field', () => {
+            const spec = {
+                name$: 'string',
+                age$: 'number'
+            };
+            const data = {
+                name: 'John Doe',
+                age: 30,
+                email: 'john@example.com'  // Unexpected field
+            };
+
+            expect(() => StructValidator.validate(data, spec)).not.toThrow();
+            expect(consoleWarnSpy).toHaveBeenCalledWith('Unexpected field in data: email');
+        });
+
+        test('Unexpected field with other validation errors', () => {
+            const spec = {
+                name$: 'string',
+                age$: 'number'
+            };
+            const data = {                
+                name: 'John Doe',
+                age: '30',  // Should be a number
+                email: 'john@example.com',  // Unexpected field
+            };
+
+            expect(() => StructValidator.validate(data, spec)).toThrow('Invalid type for age: expected number, got string');
+            expect(consoleWarnSpy).toHaveBeenCalledWith('Unexpected field in data: email');
+        });
+
+        test('Nested object with unexpected field', () => {
+            const spec = {
+                user$: {
+                    id$: 'string',
+                    name$: 'string'
+                }
+            };
+            const data = {
+                user: {
+                    id: '123',
+                    name: 'Jane Doe',
+                    role: 'admin'  // Unexpected field
+                }
+            };
+
+            expect(() => StructValidator.validate(data, spec)).not.toThrow();
+            expect(consoleWarnSpy).toHaveBeenCalledWith('Unexpected field in data: user.role');
+        });
+
+        test('Array of objects with unexpected fields', () => {
+            const spec = [{
+                id$: 'string',
+                name$: 'string'
+            }];
+            const data = [
+                { id: '1', name: 'Item 1', category: 'A' },  // Unexpected field: category
+                { id: '2', name: 'Item 2' },
+                { id: '3', name: 'Item 3', price: 9.99 }  // Unexpected field: price
+            ];
+
+            expect(() => StructValidator.validate(data, spec)).not.toThrow();
+            expect(consoleWarnSpy).toHaveBeenCalledWith('Unexpected field in data: .0.category');
+            expect(consoleWarnSpy).toHaveBeenCalledWith('Unexpected field in data: .2.price');
+        });
+
+
+
+        test('Multiple unexpected fields', () => {
+            const spec = {
+                id$: 'string',
+                name$: 'string'
+            };
+            const data = {
+                id: '123',
+                name: 'Test Item',
+                category: 'Electronics',
+                price: 99.99,
+                inStock: true
+            };
+
+            expect(() => StructValidator.validate(data, spec)).not.toThrow();
+            expect(consoleWarnSpy).toHaveBeenCalledWith('Unexpected field in data: category');
+            expect(consoleWarnSpy).toHaveBeenCalledWith('Unexpected field in data: price');
+            expect(consoleWarnSpy).toHaveBeenCalledWith('Unexpected field in data: inStock');
         });
     });
 });
