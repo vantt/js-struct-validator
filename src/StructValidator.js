@@ -1,10 +1,15 @@
 export default class StructValidator {
 
-    static validate(data, sepecification, required=true) {
-        StructValidator.#validateRecursive(data, sepecification, '', required);
+    static validate(data, specification, required=true) {
+        console.log('validation:', data, specification);
+        StructValidator.#validateRecursive(data, specification, '', required);
     }
 
     static #validateRecursive(data, specification, path = '', required = true) {
+        //console.log('in recursive', data, specification)
+
+        // there is no specification to validate, so we just skip
+        if (specification === undefined || specification === null) return;
 
         if (data === undefined || data === null) {
             if (required) {
@@ -28,7 +33,8 @@ export default class StructValidator {
             this.#validateObject(data, specification, path, required);
         }
         else {
-            throw new Error(`Invalid specification for ${path}`);
+            const dumpdata = 'spec: '+ JSON.stringify(specification) + ' data: ' + JSON.stringify(specification)
+            throw new Error(`Invalid specification for path "${path}". ` + dumpdata) ;
         }
     }
 
