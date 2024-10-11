@@ -1,7 +1,6 @@
 export default class StructValidator {
 
-    static validate(data, specification, required=true) {
-        console.log('validation:', data, specification);
+    static validate(data, specification, required=true) {        
         StructValidator.#validateRecursive(data, specification, '', required);
     }
 
