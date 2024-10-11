@@ -1,6 +1,6 @@
 {
   "name": "@trantoanvan/js-struct-validator",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "js library helps validate an object follow a predefined specification structure",
   "main": "dist/bundled.cjs.js",
   "module": "dist/bundled.esm.js",
